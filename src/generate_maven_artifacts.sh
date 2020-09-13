@@ -17,8 +17,14 @@ bash ./generate_swig_wrapper.sh
 
 javaClassesPath="$BUILD_DIR/java-classes"
 javaSourcesPath="$BUILD_DIR/java-sources"
-mavenPath="$BUILD_DIR/maven"
 nativesPath="$BUILD_DIR/java-natives"
+
+mavenGroupId="effekseer"
+mavenArtifactId="effekseer-native"
+mavenVersion="$VERSION"
+
+mavenPath="$BUILD_DIR/maven/$mavenGroupId/$mavenArtifactId/$mavenVersion"
+
 
 rm -R "$javaClassesPath" || true
 rm -R "$javaSourcesPath" || true
@@ -40,16 +46,14 @@ echo "
   xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"
   xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd\">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>effekseer</groupId>
- <artifactId>effekseer-native</artifactId>
- <version>$VERSION</version>
+  <groupId>$mavenGroupId</groupId>
+ <artifactId>$mavenArtifactId</artifactId>
+ <version>$mavenVersion</version>
   <name>effekseer-native</name>
   <description></description>
   <url></url>
 </project> 
-" > "$mavenPath/pom.xml"
-
-cp "$mavenPath/pom.xml" "$mavenPath/effekseer-native-$VERSION.pom"
+" >  "$mavenPath/effekseer-native-$VERSION.pom"
 
 cp -Rf "$nativesPath" "$javaClassesPath/native"
 

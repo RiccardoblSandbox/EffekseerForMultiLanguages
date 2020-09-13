@@ -195,8 +195,15 @@ jobs:
         run: |
           cd maven
           ls -lh
-          mvn deploy -Dregistry=https://maven.pkg.github.com/$GITHUB_ACTOR -DaltDeploymentRepository=github::default::https://maven.pkg.github.com/$GITHUB_REPOSITORY -Dtoken=GH_TOKEN
-
+          files="`find . \( -name "*.jar" -o -name "*.pom" \) -type f -print`"
+          set -f
+          for art in $files; do
+              file="${art:2}"
+              dest="https://maven.pkg.github.com/$GITHUB_REPOSITORY/$file" 
+              echo "Upload $file to $dest"
+              curl -T $file -H "Authorization: token $GITHUB_TOKEN" $dest -vvv
+          done
+          set +f
 
   windowsExamples:
     name: Build Windows Samples
