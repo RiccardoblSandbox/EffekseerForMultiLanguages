@@ -195,7 +195,7 @@ jobs:
         run: |
           cd maven
           ls -lh
-          mvn deploy -Dregistry=https://maven.pkg.github.com/RiccardoblSandbox -Dtoken=GH_TOKEN
+          mvn deploy -Dregistry=https://maven.pkg.github.com/$GITHUB_ACTOR -DaltDeploymentRepository=github::https://maven.pkg.github.com/$GITHUB_REPOSITORY -Dtoken=GH_TOKEN
 
 
   windowsExamples:
