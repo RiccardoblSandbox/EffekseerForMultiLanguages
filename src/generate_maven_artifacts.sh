@@ -47,7 +47,9 @@ echo "
   <description></description>
   <url></url>
 </project> 
-" > "$mavenPath/effekseer-native-$VERSION.pom"
+" > "$mavenPath/pom.xml"
+
+cp "$mavenPath/pom.xml" "$mavenPath/effekseer-native-$VERSION.pom"
 
 cp -Rf "$nativesPath" "$javaClassesPath/native"
 
