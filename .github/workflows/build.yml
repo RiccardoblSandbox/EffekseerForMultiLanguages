@@ -3,6 +3,7 @@ on:
     branches:
       - ci
   release:
+    types: [published]
   pull_request:
     branches:
       - ci
