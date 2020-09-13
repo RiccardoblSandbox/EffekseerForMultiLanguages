@@ -164,11 +164,11 @@ jobs:
       - name: Upload C# Library
         uses: actions/upload-artifact@v1
         with:
-          name: maven
+          name: lib-csharp
           path: build/dist-csharp
 
   windowsExamples:
-    name: Windows Samples Build
+    name: Build Windows Samples
     runs-on: vs2017-win2016
     steps:
       - uses: actions/checkout@v2
