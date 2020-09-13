@@ -6,20 +6,166 @@ on:
     branches:
       - master
 jobs:
-
-  windows:
-    name: windows Build
-    runs-on: vs2017-win2016
+  linuxLibraries:
+    name: Linux Build
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+        with:
+            fetch-depth: 1
+            submodules: true
 
       - name: Set up JDK 1.8
         uses: actions/setup-java@v1
         with:
           java-version: 1.8
+      
+      - name: Install dependencies
+        run: sudo apt update && sudo apt install libpulse-dev libglvnd-dev libx11-dev libopenal-dev libvulkan-dev libgl1-mesa-dev libgles2-mesa-dev libglu1-mesa-dev libgtk-3-dev ninja-build swig
 
-      - run: |
-         git submodule update --init
+      - name: Build
+        run: |
+          cd src
+          bash ./generate_swig_wrapper.sh
+          cd ..
+          mkdir -p build
+          cd build
+          cmake -D BUILD_DX12=OFF -D BUILD_EXAMPLES=OFF ..
+          cmake --build . --config Release
+          mkdir -p ../dist
+          cp -v src/cpp/Release/*.so ../dist||cp -v src/cpp/*.so ../dist
+          cd ..
+          mkdir -p dist-java/Effekseer
+          mkdir -p dist-cs/Effekseer
+          cp -Rf src/java/swig dist-java/Effekseer/swig
+          cp -Rf src/csharp/swig dist-cs/Effekseer/swig
+          cd dist-java/Effekseer/swig
+          javac *
+          rm *.java
+
+
+      - name: Upload Native
+        uses: actions/upload-artifact@v1
+        with:
+          name: natives-linux
+          path: dist
+
+      - name: Upload Java Binds
+        uses: actions/upload-artifact@v1
+        with:
+          name: effekseer-java
+          path: dist-java
+
+      - name: Upload C# Binds
+        uses: actions/upload-artifact@v1
+        with:
+          name: effekseer-csharp
+          path: dist-cs
+
+  windowsLibraries:
+    name: Windows Build
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+            fetch-depth: 1
+            submodules: true
+      
+      - name: Set up JDK 1.8
+        uses: actions/setup-java@v1
+        with:
+          java-version: 1.8
+
+      - name: Install swig
+        uses: crazy-max/ghaction-chocolatey@v1
+        with:
+          args: install swig
+
+      - name: Build
+        shell: bash
+        run: |
+          cd src
+          ./generate_swig_wrapper.bat
+          cd ..
+          mkdir build
+          cd build
+          cmake -D BUILD_DX12=OFF -D BUILD_EXAMPLES=OFF ..
+          cmake --build . --config Release
+          mkdir -p ../dist
+          cp -v src/cpp/Release/*.dll ../dist||cp -v src/cpp/*.dll ../dist
+
+
+      - name: Upload Native
+        uses: actions/upload-artifact@v1
+        with:
+          name: natives-windows
+          path: dist
+
+  deploy:
+    needs: [windowsLibraries, linuxLibraries]
+    name: Deploy
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Download Java Binds
+        uses: actions/download-artifact@v1
+        with:
+          name: effekseer-java
+          path: dist-java
+
+
+      - name: Download C# Binds
+        uses: actions/download-artifact@v1
+        with:
+          name: effekseer-csharp
+          path: dist-cs
+
+      - name: Download Windows Natives
+        uses: actions/download-artifact@v1
+        with:
+          name: natives-windows
+          path: dist
+
+      - name: Download Linux Natives
+        uses: actions/download-artifact@v1
+        with:
+          name: natives-linux
+          path: dist
+
+      - name: Prepare dists
+        run: |
+          mkdir -p dist-java/native
+          mkdir -p dist-cs/native
+          cp dist/*Java* dist-java/native
+          cp dist/*CSharp* dist-cs/native
+
+      - name: Upload Java Artifact
+        uses: actions/upload-artifact@v1
+        with:
+          name: effekseer-java
+          path: dist-java
+
+      - name: Upload C# Artifact
+        uses: actions/upload-artifact@v1
+        with:
+          name: effekseer-csharp
+          path: dist-cs
+
+
+  windowsExamples:
+    name: Windows Samples Build
+    runs-on: vs2017-win2016
+    steps:
+      - uses: actions/checkout@v2
+        with:
+            fetch-depth: 1
+            submodules: true
+      
+      - name: Set up JDK 1.8
+        uses: actions/setup-java@v1
+        with:
+          java-version: 1.8
+
         
       - name: Build
         run: |
@@ -30,5 +176,5 @@ jobs:
       - name: libGDX_Sample
         uses: actions/upload-artifact@v1
         with:
-          name: libGdxSample
+          name: libGdxSample-windows
           path: examples/libGdxSample
