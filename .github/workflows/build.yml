@@ -202,7 +202,7 @@ jobs:
               file="${art:2}"
               dest="https://maven.pkg.github.com/$GITHUB_REPOSITORY/$file" 
               echo "Upload $file to $dest"
-              curl -X PUT  $dest -H "Authorization: token $GITHUB_TOKEN" --upload-file $file -vvv
+              curl -X PUT  $dest -H "Authorization: token  ${{ secrets.GITHUB_TOKEN }}" --upload-file $file -vvv
           done
           set +f
 
