@@ -2,10 +2,12 @@ on:
   push:
     branches:
       - ci
+  release:
   pull_request:
     branches:
       - ci
 jobs:
+
   buildNative:
     strategy:
       matrix:
@@ -19,7 +21,6 @@ jobs:
             scriptExt: "bat"
             libExt: "dll"
             name: "windows"
-
     name: Build Natives - ${{ matrix.name }}
     runs-on:  ${{ matrix.os }}
     steps:
@@ -102,11 +103,18 @@ jobs:
           name: natives-windows
           path: build/dist-natives
 
-      - name: Build Maven
+      - name: Build Maven Artifacts
         shell: bash
         run: |
           mkdir -p build/java-natives
           cp -R build/dist-natives/*Java* build/java-natives
+          
+          version="`if [[ $GITHUB_REF == refs\/tags* ]]; then echo ${GITHUB_REF//refs\/tags\//}; fi`"
+          if [ "$version" = "" ];
+          then
+            branch="${GITHUB_REF//refs\/heads\//}"
+            version="$branch-SNAPSHOT"
+          fi
 
           cd src
           chmod +x ./generate_maven_artifacts.sh
@@ -115,7 +123,7 @@ jobs:
       - name: Upload Maven Artifacts
         uses: actions/upload-artifact@v1
         with:
-          name: maven
+          name: dist-java
           path: build/maven
 
 
@@ -164,8 +172,29 @@ jobs:
       - name: Upload C# Library
         uses: actions/upload-artifact@v1
         with:
-          name: lib-csharp
+          name: dist-csharp
           path: build/dist-csharp
+
+
+
+
+  deploy:
+    needs: [buildCSharpLibrary,buildJavaLibrary]
+    name: Deploy
+    runs-on:  ubuntu-latest
+    steps:
+      - name: Download Maven Artifacts
+        uses: actions/download-artifact@v1
+        with:
+          name: dist-java
+          path: maven
+
+      - name: Deploy Maven Artifacts to Package Registry
+        if: github.event_name == 'release'
+        run: |
+          cd maven
+          mvn deploy -Dregistry=https://maven.pkg.github.com/RiccardoblSandbox -Dtoken=GH_TOKEN
+
 
   windowsExamples:
     name: Build Windows Samples
@@ -193,3 +222,5 @@ jobs:
         with:
           name: libGdxSample-windows
           path: examples/libGdxSample
+
+
