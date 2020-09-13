@@ -109,11 +109,11 @@ jobs:
           mkdir -p build/java-natives
           cp -R build/dist-natives/*Java* build/java-natives
           
-          version="`if [[ $GITHUB_REF == refs\/tags* ]]; then echo ${GITHUB_REF//refs\/tags\//}; fi`"
-          if [ "$version" = "" ];
+          export VERSION="`if [[ $GITHUB_REF == refs\/tags* ]]; then echo ${GITHUB_REF//refs\/tags\//}; fi`"
+          if [ "$VERSION" = "" ];
           then
             branch="${GITHUB_REF//refs\/heads\//}"
-            version="$branch-SNAPSHOT"
+            export VERSION="$branch-SNAPSHOT"
           fi
 
           cd src
@@ -193,6 +193,7 @@ jobs:
         if: github.event_name == 'release'
         run: |
           cd maven
+          ls -lh
           mvn deploy -Dregistry=https://maven.pkg.github.com/RiccardoblSandbox -Dtoken=GH_TOKEN
 
 
